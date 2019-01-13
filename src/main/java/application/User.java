@@ -5,6 +5,7 @@ import org.hibernate.annotations.NaturalId;
 import org.mindrot.jbcrypt.BCrypt;
 
 import javax.persistence.*;
+import java.util.List;
 
 
 @Entity
@@ -24,8 +25,16 @@ public class User {
 
     @Override
     public String toString() {
-        return String.format("User<id=%d fname=%s lname=%s is_admin=%b>",
-                this.id, this.first_name, this.last_name, this.is_admin);
+        String acc_type = this.is_admin ? "administrator" : "uzytkownik";
+        return String.format("Id: %d\n%s: %s %s\nlogin: %s", this.id, acc_type, this.last_name, this.first_name, this.login);
+    }
+
+    private void save() {
+        Session session = Main.sessionFactory.openSession();
+        session.beginTransaction();
+        session.save(this);
+        session.getTransaction().commit();
+        session.close();
     }
 
     private static boolean securityPolicy(String password) {
@@ -76,6 +85,10 @@ public class User {
         return User.createNewUser(false);
     }
 
+    static User createNewAdministator() {
+        return User.createNewUser(true);
+    }
+
     static User userLogin() throws Exception {
         try {
             System.out.println("Logowanie do systemu Orwell");
@@ -100,28 +113,54 @@ public class User {
     void menu() {
         System.out.println("Witaj w systemie Orwell: " + this.first_name + " " + last_name);
         boolean menuLoop = true;
-        while (menuLoop) {
-            System.out.println("==== MENU UZYTKOWNIKA ====");
-            System.out.println("0. Wyjdz z systemu");
-            System.out.println("Co chcesz zrobic: ");
 
-            int choice;
-            try {
-                choice = Integer.parseInt(Main.userInput.nextLine());
-            } catch (NumberFormatException e) {
-                choice = -1;
-            }
+        if(this.is_admin) {
+            while (menuLoop) {
+                System.out.println("==== MENU ADMINISTRATORA ====");
+                System.out.println("0. Wyjdz z systemu");
+                System.out.println("1. Dodaj uzytkownika");
+                System.out.println("2. Dodaj administratora");
+                System.out.println("3. Wypisz wszystkie konta");
+                System.out.println("Co chcesz zrobic: ");
 
-            switch (choice) {
-                default:
-                    System.out.println("Nieznana opcja.");
-                    break;
-                case 0:
-                    menuLoop = false;
-                    break;
+                int choice;
+                try {
+                    choice = Integer.parseInt(Main.userInput.nextLine());
+                } catch (NumberFormatException e) {
+                    choice = -1;
+                }
+
+                switch (choice) {
+                    default:
+                        System.out.println("Nieznana opcja.");
+                        break;
+                    case 0:
+                        menuLoop = false;
+                        break;
+                    case 1: {
+                        User u = User.createNewUser();
+                        u.save();
+                        System.out.println(u);
+                        break;
+                    }
+                    case 2: {
+                        User u = User.createNewAdministator();
+                        u.save();
+                        System.out.println(u);
+                        break;
+                    }
+                    case 3: {
+                        Session s = Main.sessionFactory.openSession();
+                        List<User> users = s.createQuery("from User", User.class).getResultList();
+                        users.forEach(x->System.out.println(x));
+                        s.close();
+                        break;
+                    }
+                }
+
+                System.out.println("Wychodzenie z systemu.");
             }
         }
-        System.out.println("Wychodzenie z systemu.");
     }
 
 
