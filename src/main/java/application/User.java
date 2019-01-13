@@ -1,9 +1,10 @@
 package application;
 
+import org.hibernate.Session;
+import org.hibernate.annotations.NaturalId;
 import org.mindrot.jbcrypt.BCrypt;
 
 import javax.persistence.*;
-import java.util.Scanner;
 
 
 @Entity
@@ -15,6 +16,7 @@ public class User {
     private String first_name;
 
     private String last_name;
+    @NaturalId
     @Column(unique = true)
     private String login;
     private String pass_hash;
@@ -26,54 +28,101 @@ public class User {
                 this.id, this.first_name, this.last_name, this.is_admin);
     }
 
-    private static boolean security_policy(String password) {
+    private static boolean securityPolicy(String password) {
         boolean ok = password.length() >= 8;
-        if(!ok) {
+        if (!ok) {
             System.out.println("Haslo nie spelnia polityki bezpieczenstwa");
             System.out.println("Haslo musi miec min. 8 znakow");
         }
         return ok;
     }
 
-    private void set_new_password() {
-        Scanner sc = new Scanner(System.in);
+    private void setNewPassword() {
 
         String pass;
         do {
             System.out.println("Podaj nowe haslo: ");
-            pass = sc.nextLine();
-        } while(!security_policy(pass));
+            pass = Main.userInput.nextLine().trim();
+        } while (!securityPolicy(pass));
 
         this.pass_hash = BCrypt.hashpw(pass, BCrypt.gensalt(12));
     }
 
-    private static String read_string(String stdPrompt, String errPrompt) {
+    private static String readString(String stdPrompt, String errPrompt) {
         String s;
-        Scanner sc = new Scanner(System.in);
         boolean err = false;
         do {
             if (err)
                 System.out.println(errPrompt);
             System.out.println(stdPrompt);
-            s = sc.nextLine().trim();
+            s = Main.userInput.nextLine().trim();
             err = s.length() < 3;
         } while (err);
         return s;
     }
 
-
-
-    static User create_new_user(boolean make_admin) {
+    static User createNewUser(boolean make_admin) {
         User u = new User();
-        u.first_name = User.read_string("Podaj imie: ", "Bledne imie!");
-        u.last_name = User.read_string("Podaj nazwisko: ", "Bledne nazwisko!");
-        u.login = User.read_string("Podaj login: ", "Bledny login");
-        u.set_new_password();
+        u.first_name = User.readString("Podaj imie: ", "Bledne imie!");
+        u.last_name = User.readString("Podaj nazwisko: ", "Bledne nazwisko!");
+        u.login = User.readString("Podaj login: ", "Bledny login");
+        u.setNewPassword();
         u.is_admin = make_admin;
 
         return u;
-    };
+    }
+
+    static public User userLogin() throws Exception {
+        try {
+            System.out.println("Logowanie do systemu Orwell");
+            System.out.println("Podaj login: ");
+            String login = Main.userInput.nextLine().trim();
+            System.out.println("Podaj haslo: ");
+            String pass = Main.userInput.nextLine().trim();
+
+            Session s = Main.sessionFactory.openSession();
+            User user = s.bySimpleNaturalId(User.class).load(login);
+            if (BCrypt.checkpw(pass, user.pass_hash)) {
+                System.out.println("Poprawne haslo");
+            } else {
+                throw new User.NotAuthorized();
+            }
+
+            return user;
+        } catch (NullPointerException e) {
+            throw new User.NotAuthorized();
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    public void menu() {
+        System.out.println("Witaj w systemie Orwell: " + this.first_name + " " + last_name);
+        boolean menuLoop = true;
+        while (menuLoop) {
+            System.out.println("==== MENU UZYTKOWNIKA ====");
+            System.out.println("0. Wyjdz z systemu");
+            System.out.println("Co chcesz zrobic: ");
+
+            int choice = Integer.parseInt(Main.userInput.nextLine());
+
+            switch (choice) {
+                default:
+                    System.out.println("Nieznana opcja.");
+                    break;
+                case 0:
+                    menuLoop = false;
+                    break;
+            }
+        }
+    }
 
 
-
+    public static class NotAuthorized extends Exception {
+        NotAuthorized() {
+            super("Blad autoryzacji");
+        }
+    }
 }
+
+

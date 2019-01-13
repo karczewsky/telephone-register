@@ -3,32 +3,56 @@ package application;
 import org.apache.log4j.BasicConfigurator;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.exception.ConstraintViolationException;
-import org.hibernate.query.Query;
 
+import javax.persistence.Query;
 import java.math.BigInteger;
+import java.util.Scanner;
 
 
 public class Main {
     static SessionFactory sessionFactory;
+    static Scanner userInput;
 
-    public static void main(String[] args) {
+    private static void init() {
         BasicConfigurator.configure();
         sessionFactory = new Configuration()
                 .configure()
                 .buildSessionFactory();
-        Session session = sessionFactory.openSession();
+        Main.userInput = new Scanner(System.in);
+    }
+
+
+    public static void main(String[] args) {
+        init();
         // Check if admin already exists in system
+        // If not create new admin
+        Session session = sessionFactory.openSession();
         Query query = session.createNativeQuery("SELECT count(*) from user_account");
-        if(((BigInteger)query.getSingleResult()).compareTo(new BigInteger("0")) == 0) {
+        if((query.getSingleResult()).equals(BigInteger.ZERO)) {
             System.out.println("System nie posiada adminstatora, tworzenie administratora...");
-            User a = User.create_new_user(true);
+            User a = User.createNewUser(true);
             session.beginTransaction();
             session.save(a);
             session.getTransaction().commit();
+        }init();
+        session.close();
+
+        User user = null;
+        try {
+            user = User.userLogin();
+        } catch (User.NotAuthorized e) {
+            System.out.println("Bledne dane logowanie, zamykanie programu");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Blad krytyczny");
         }
 
-        session.close();
+        if(user == null)
+            return;
+
+        user.menu();
+
     }
 }
