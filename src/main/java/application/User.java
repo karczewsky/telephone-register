@@ -72,14 +72,17 @@ public class User {
         return u;
     }
 
-    static public User userLogin() throws Exception {
+    static User createNewUser() {
+        return User.createNewUser(false);
+    }
+
+    static User userLogin() throws Exception {
         try {
             System.out.println("Logowanie do systemu Orwell");
             System.out.println("Podaj login: ");
             String login = Main.userInput.nextLine().trim();
             System.out.println("Podaj haslo: ");
             String pass = Main.userInput.nextLine().trim();
-
             Session s = Main.sessionFactory.openSession();
             User user = s.bySimpleNaturalId(User.class).load(login);
             if (BCrypt.checkpw(pass, user.pass_hash)) {
@@ -91,12 +94,10 @@ public class User {
             return user;
         } catch (NullPointerException e) {
             throw new User.NotAuthorized();
-        } catch (Exception e) {
-            throw e;
         }
     }
 
-    public void menu() {
+    void menu() {
         System.out.println("Witaj w systemie Orwell: " + this.first_name + " " + last_name);
         boolean menuLoop = true;
         while (menuLoop) {
@@ -104,7 +105,12 @@ public class User {
             System.out.println("0. Wyjdz z systemu");
             System.out.println("Co chcesz zrobic: ");
 
-            int choice = Integer.parseInt(Main.userInput.nextLine());
+            int choice;
+            try {
+                choice = Integer.parseInt(Main.userInput.nextLine());
+            } catch (NumberFormatException e) {
+                choice = -1;
+            }
 
             switch (choice) {
                 default:
@@ -115,14 +121,16 @@ public class User {
                     break;
             }
         }
+        System.out.println("Wychodzenie z systemu.");
     }
 
 
-    public static class NotAuthorized extends Exception {
+    static class NotAuthorized extends Exception {
         NotAuthorized() {
             super("Blad autoryzacji");
         }
     }
 }
+
 
 
