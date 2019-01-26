@@ -225,8 +225,7 @@ public class User extends Persistable {
                         break;
                     }
                     case 7: {
-                        User.printTable();
-
+                        Event.createNewEvenFromUser();
                         break;
                     }
                 }

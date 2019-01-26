@@ -1,7 +1,6 @@
 package application;
 
 import org.hibernate.Session;
-import sun.awt.geom.AreaOp;
 
 import javax.persistence.*;
 import java.util.List;
@@ -14,6 +13,11 @@ public class Phone extends Persistable {
     @ManyToOne()
     @JoinColumn(name = "fk_user")
     private User owner;
+
+    @Override
+    public String toString() {
+        return String.format("Telefon<nr: %s>", this.number);
+    }
 
     long getNumber() {
         return this.number;
@@ -76,5 +80,18 @@ public class Phone extends Persistable {
         } catch (PersistenceException e) {
             System.out.println("Podany telefon juz istnieje w bazie danych");
         }
+    }
+
+    static Phone getByNumber(long nr) throws NoSuchPhone {
+        Session s = Main.sessionFactory.openSession();
+        Phone p = s.byId(Phone.class).load(nr);
+        s.close();
+        if (p == null)
+            throw new NoSuchPhone();
+        return p;
+    }
+
+    static class NoSuchPhone extends Exception {
+        NoSuchPhone() { super("Podany telefon nie istnieje w bazie"); }
     }
 }
