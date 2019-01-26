@@ -201,7 +201,12 @@ public class User extends Persistable {
                         String login = Main.userInput.nextLine().trim();
                         try {
                             User u = User.getUserByLogin(login);
-                            u.delete();
+                            if(this.login.equals(u.login)) {
+                                System.out.println("Uzytkownik nie moze sam sie usunac");
+                            } else {
+                                u.delete();
+                                System.out.println("Uzytkownik zostal usuniety");
+                            }
                         } catch (NoSuchUserException e) {
                             System.out.println("Podany uzytownik nie istnieje w bazie");
                         }
@@ -240,9 +245,6 @@ public class User extends Persistable {
 
         System.out.println("Wychodzenie z systemu.");
     }
-
-
-
 
     static class NotAuthorizedException extends Exception {
         NotAuthorizedException() { super("Blad autoryzacji"); }
