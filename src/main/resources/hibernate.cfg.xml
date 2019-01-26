@@ -13,5 +13,6 @@
 
     <mapping class="application.User"/>
     <mapping class="application.Phone"/>
+    <mapping class="application.Event"/>
 </session-factory>
 </hibernate-configuration>
