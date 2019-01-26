@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-public class Event {
+public class Event extends Persistable {
     @Id
     private long id;
 

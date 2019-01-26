@@ -44,7 +44,9 @@ public class User extends Persistable {
         return String.format("%s \"%s\" %s", this.first_name, this.login, this.last_name);
     }
 
-    static private void printTable() {
+    boolean getAdminStatus() { return this.is_admin; }
+
+    static void printTable() {
         System.out.printf("|%6s|%40s|%25s|%10s|\n", "ID", "Osoba", "Login", "Admin");
         Session s = Main.sessionFactory.openSession();
         List<User> users = s.createQuery("from User", User.class).getResultList();
@@ -116,7 +118,7 @@ public class User extends Persistable {
         }
     }
 
-    static private User getUserByLogin(String login) throws NoSuchUserException {
+    static User getUserByLogin(String login) throws NoSuchUserException {
         Session s = Main.sessionFactory.openSession();
         User u = s.bySimpleNaturalId(User.class).load(login);
         s.close();
@@ -160,6 +162,7 @@ public class User extends Persistable {
                 System.out.println("4. Usun uzytkownika");
                 System.out.println("5. Wypisz wszystkie telefony");
                 System.out.println("6. Dodaj nowy numer telefonu");
+                System.out.println("7. Dodaj nowe polaczenie");
 
                 System.out.println("Co chcesz zrobic: ");
                 int choice = Utils.readPositiveInteger();
@@ -218,24 +221,11 @@ public class User extends Persistable {
                         break;
                     }
                     case 6: {
+                        Phone.createNewPhoneFromUser();
+                        break;
+                    }
+                    case 7: {
                         User.printTable();
-                        System.out.println("Podaj login uzytkownika, do ktorego ma byc przypisany telefon: ");
-                        String login = Main.userInput.nextLine().trim();
-                        try {
-                            User u = User.getUserByLogin(login);
-                            System.out.println("Podaj numer telefonu:");
-                            long num = Utils.readPositiveLong();
-                            if (num == -1) {
-                                System.out.println("Niepoprawnie podany numer");
-                            } else {
-                                Phone phone = Phone.createNewPhone(num, u);
-                                phone.save();
-                            }
-                        } catch (NoSuchUserException e) {
-                            System.out.println("Podany uzytkownik nie istnieje w bazie");
-                        } catch (PersistenceException e) {
-                            System.out.println("Podany numer telefonu jest juz w bazie");
-                        }
 
                         break;
                     }

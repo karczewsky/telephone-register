@@ -21,6 +21,9 @@ class Utils {
         } catch (NumberFormatException e) {
             num = -1;
         }
+
+        if(num < 0)
+            num = -1;
         return num;
     }
 
@@ -31,6 +34,9 @@ class Utils {
         } catch (NumberFormatException e) {
             num = -1;
         }
+
+        if (num < 0)
+            num = -1;
         return num;
     }
 }
