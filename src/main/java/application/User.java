@@ -5,6 +5,8 @@ import org.hibernate.annotations.NaturalId;
 import org.mindrot.jbcrypt.BCrypt;
 
 import javax.persistence.*;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -136,6 +138,7 @@ public class User extends Persistable {
                 System.out.println("==== MENU UZYTKOWNIKA ====");
                 System.out.println("0. Wyjdz z systemu");
                 System.out.println("1. Wypisz numery");
+                System.out.println("2. Wypisz historie polaczen");
                 int choice = Utils.readPositiveInteger();
 
                 switch (choice) {
@@ -149,6 +152,35 @@ public class User extends Persistable {
                         System.out.println("Telefony nalezace do uzytkownika: ");
                         this.phones.forEach(x->System.out.printf("%s\n", x.getNumber()));
                         break;
+                    }
+                    case 2: {
+                        System.out.println("Historia polaczen");
+                        Session s = Main.sessionFactory.openSession();
+                        List<Event> events = s.createQuery(
+                                "from Event where toPhone.owner = " + this.id +
+                                        " or fromPhone.owner = " + this.id, Event.class).getResultList();
+
+                        System.out.println(Event.getRowHeader());
+                        int countAnswered = 0;
+                        Duration sumDuration = Duration.ZERO;
+                        for (Event event : events) {
+                            System.out.println(event.getRow());
+                            if (event.getStatus() == Event.Status.ANSWERED) {
+                                countAnswered++;
+                                sumDuration = sumDuration.plus(
+                                        Duration.between(event.getStartTime(), event.getEndTime()));
+                            }
+                        }
+
+                        System.out.println("== Statystyki ==");
+                        System.out.printf("Suma polaczen: %s\n", events.size());
+                        System.out.printf("Odebrane polaczenia: %s\n", countAnswered);
+                        System.out.printf("Polaczenia nieodebrane: %s\n", events.size() - countAnswered);
+                        System.out.printf("Laczny czas polaczen: %s\n", Utils.prettyDuration(sumDuration));
+                        if (countAnswered != 0) {
+                            Duration meanDuration = sumDuration.dividedBy(countAnswered);
+                            System.out.printf("Srednia dlugosc polaczenia: %s\n", Utils.prettyDuration(meanDuration));
+                        }
                     }
                 }
             }

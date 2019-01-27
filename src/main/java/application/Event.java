@@ -14,23 +14,40 @@ public class Event extends Persistable {
 
     @ManyToOne()
     @JoinColumn(name = "fk_start")
-    private Phone from_phone;
+    private Phone fromPhone;
 
     @ManyToOne()
     @JoinColumn(name = "fk_to")
-    private Phone to_phone;
+    private Phone toPhone;
 
-    private LocalDateTime start_ts;
-    private LocalDateTime end_ts;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
     private Status status;
 
     @Override
     public String toString() {
+        String end_s = this.endTime == null ? "N/A" : endTime.toString();
         return String.format("Status: %s Start: %s End: %s From: %s To: %s",
-                this.status, this.start_ts, this.end_ts, this.from_phone, this.to_phone);
+                this.status, this.startTime, end_s, this.fromPhone.getNumber(), this.toPhone.getNumber());
     }
+
+    static String getRowHeader() {
+        return String.format("|%12s|%12s|%15s|%22s|%22s|", "Od", "Do", "Status", "Start", "Koniec");
+    }
+
+    String getRow() {
+        String end_s = this.endTime == null ? "N/A" : endTime.toString();
+        return String.format("|%12s|%12s|%15s|%22s|%22s|",
+                this.fromPhone.getNumber(), this.toPhone.getNumber(), this.status, this.startTime, end_s);
+    }
+
+    Status getStatus() { return this.status; }
+
+    LocalDateTime getStartTime() { return this.startTime; }
+
+    LocalDateTime getEndTime() { return this.endTime; }
 
     public enum Status {
         ANSWERED,
@@ -76,7 +93,7 @@ public class Event extends Persistable {
             try {
                 System.out.println("Podaj czas rozpoczecia polaczenia:");
                 String line = Main.userInput.nextLine().trim();
-                event.start_ts = LocalDateTime.parse(line, formatDate);
+                event.startTime = LocalDateTime.parse(line, formatDate);
                 err = false;
             } catch (DateTimeParseException e) {
                 System.out.println("Bledny format");
@@ -91,8 +108,8 @@ public class Event extends Persistable {
                 try {
                     System.out.println("Podaj czas zakoczenia polaczenia:");
                     String line = Main.userInput.nextLine().trim();
-                    event.end_ts = LocalDateTime.parse(line, formatDate);
-                    Duration duration = Duration.between(event.start_ts, event.end_ts);
+                    event.endTime = LocalDateTime.parse(line, formatDate);
+                    Duration duration = Duration.between(event.startTime, event.endTime);
 
                     if (duration.isNegative() || duration.isZero()) {
                         System.out.println("Polaczenie musi trawac min. 1 sekunde");
@@ -104,7 +121,7 @@ public class Event extends Persistable {
                 }
             } while (err);
         } else {
-            event.end_ts = null;
+            event.endTime = null;
         }
 
         err = false;
@@ -117,7 +134,7 @@ public class Event extends Persistable {
             } else {
                 try {
                     err = false;
-                    event.from_phone = Phone.getByNumber(nr);
+                    event.fromPhone = Phone.getByNumber(nr);
                 } catch (Phone.NoSuchPhone e) {
                     err = true;
                     System.out.println("Brak podanego telefonu w bazie danych");
@@ -133,8 +150,8 @@ public class Event extends Persistable {
             } else {
                 try {
                     err = false;
-                    event.to_phone = Phone.getByNumber(nr);
-                    if (event.from_phone.getNumber() == event.to_phone.getNumber()) {
+                    event.toPhone = Phone.getByNumber(nr);
+                    if (event.fromPhone.getNumber() == event.toPhone.getNumber()) {
                         err = true;
                         System.out.println("Numer docelowy i wykonujacy polaczenia nie moga byc takie same");
                     }
