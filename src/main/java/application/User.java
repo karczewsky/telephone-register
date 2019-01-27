@@ -195,6 +195,7 @@ public class User extends Persistable {
                 System.out.println("5. Wypisz wszystkie telefony");
                 System.out.println("6. Dodaj nowy numer telefonu");
                 System.out.println("7. Dodaj nowe polaczenie");
+                System.out.println("8. Tryb inspektora");
 
                 System.out.println("Co chcesz zrobic: ");
                 int choice = Utils.readPositiveInteger();
@@ -259,6 +260,23 @@ public class User extends Persistable {
                     case 7: {
                         Event.createNewEvenFromUser();
                         break;
+                    }
+                    case 8: {
+                        User.printTable();
+                        System.out.println("Podaj login uzytkownika do inspekcji");
+                        String login = Main.userInput.nextLine().trim();
+                        try {
+                            User u = User.getUserByLogin(login);
+                            if(u.is_admin)
+                                System.out.println("Nie mozesz przeprowadzis inspekcji na administratorach");
+                            else {
+                                System.out.println("=== ROZPOCZECIE INSPEKCJI ===");
+                                u.menu();
+                                System.out.println("=== ZAKONCZENIE INSPEKCJI ===");
+                            }
+                        } catch (NoSuchUserException e) {
+                            System.out.println("Brak podanego uzytkownika w systemie");
+                        }
                     }
                 }
             }
