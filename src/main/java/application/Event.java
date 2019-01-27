@@ -134,6 +134,10 @@ public class Event extends Persistable {
                 try {
                     err = false;
                     event.to_phone = Phone.getByNumber(nr);
+                    if (event.from_phone.getNumber() == event.to_phone.getNumber()) {
+                        err = true;
+                        System.out.println("Numer docelowy i wykonujacy polaczenia nie moga byc takie same");
+                    }
                 } catch (Phone.NoSuchPhone e) {
                     err = true;
                     System.out.println("Brak podanego telefonu w bazie danych");
